@@ -122,13 +122,14 @@ def create_images(story, section, output_csv):
         # buildings
         background = paste_image(background, icons, section[0], section_level[0], 900, 250) # upper right
         background = paste_image(background, icons, section[1], section_level[1], 294, 552) # upper left
-        background = paste_image(background, icons, section[2], section_level[2], 1192, 396) # bottom right
-        background = paste_image(background, icons, section[3], section_level[3], 586, 698) # bottom left
+        background = paste_image(background, icons, section[2], section_level[2], 1192, 396) # lower right
+        background = paste_image(background, icons, section[3], section_level[3], 586, 698) # lower left
         
         message_column = 2
         value = (section[selected_section]*(MAX_LEVEL-1) + section_level[selected_section] - 1)
         print(level, "selected_section",selected_section,"current_section=", value)
-        level_message = message_df.iat[value, 1] + "区画のニュースです！ " + message_df.iat[value, message_column]
+        position_info = ["奥", "左側", "右側", "手前"]
+        level_message = "{}の".format(position_info[selected_section]) + message_df.iat[value, 1] + "区画のニュースです！ " + message_df.iat[value, message_column]
         print(level_message)
         level_population = message_df.iat[value, 6]
         level_education = message_df.iat[value, 7]
