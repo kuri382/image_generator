@@ -25,7 +25,7 @@ def add_text_to_image(img, text, font_path, font_size, font_color, height, width
     return img
 
 
-def add_messages(background, test_day):
+def add_messages(result_image, test_day):
     """
     画像内に表示するテキストを生成する処理（今回のプロジェクトでは使用せず）
     """
@@ -35,7 +35,7 @@ def add_messages(background, test_day):
     font_color = (25, 160, 160)
     height = 15
     width = 30
-    background = add_text_to_image(background, title, font_path, font_size, font_color, height, width)
+    result_image = add_text_to_image(result_image, title, font_path, font_size, font_color, height, width)
 
     title = "Day " + str(test_day)
     font_path = "fonts/mick-caster/Mick Caster.otf"
@@ -43,7 +43,7 @@ def add_messages(background, test_day):
     font_color = (25, 160, 160)
     height = 15
     width = 300
-    background = add_text_to_image(background, title, font_path, font_size, font_color, height, width)
+    result_image = add_text_to_image(result_image, title, font_path, font_size, font_color, height, width)
 
     test_param = 0
 
@@ -53,7 +53,7 @@ def add_messages(background, test_day):
     font_color = (25, 160, 160)
     height = 100
     width = 30
-    background = add_text_to_image(background, title, font_path, font_size, font_color, height, width)
+    result_image = add_text_to_image(result_image, title, font_path, font_size, font_color, height, width)
 
     title = "Sample parameter = " + str(test_param)
     font_path = "fonts/mick-caster/Mick Caster.otf"
@@ -61,7 +61,7 @@ def add_messages(background, test_day):
     font_color = (255, 100, 70)
     height = 130
     width = 30
-    background = add_text_to_image(background, title, font_path, font_size, font_color, height, width)
+    result_image = add_text_to_image(result_image, title, font_path, font_size, font_color, height, width)
 
     title = "Sample text, sample text, sample text!"
     font_path = "fonts/mick-caster/Mick Caster.otf"
@@ -69,12 +69,12 @@ def add_messages(background, test_day):
     font_color = (255, 100, 70)
     height = 950
     width = 30
-    background = add_text_to_image(background, title, font_path, font_size, font_color, height, width)
+    result_image = add_text_to_image(result_image, title, font_path, font_size, font_color, height, width)
 
-    return background
+    return result_image
 
 
-def paste_image(background, image, story, level, x, y):
+def paste_image(result_image, image, story, level, x, y):
     """
     アイコン画像をペーストする処理
     """
@@ -82,8 +82,8 @@ def paste_image(background, image, story, level, x, y):
     image = Image.open(icon_path).copy()
     offset_x = image.size[0] - 561
     offset_y = image.size[1] - 280
-    background.paste(image, (x - offset_x, y - offset_y), image)
-    return background
+    result_image.paste(image, (x - offset_x, y - offset_y), image)
+    return result_image
 
 
 def load_image():
@@ -102,70 +102,85 @@ def set_background_images():
     """
     全画像で共通の背景を生成する
     """
-    background_path = "img/input/background.png"
-    background = Image.open(background_path).copy()
+    background_path = "img/input/result_image.png"
+    result_image = Image.open(background_path).copy()
 
-    # background color
+    # result_image color
     background_color = Image.new("RGB", (1920, 1080), (87, 179, 110))
-    background.paste(background_color, (0, 0))
+    result_image.paste(background_color, (0, 0))
 
     # ground images
     base_path = "img/input/base_0.png"
     base = Image.open(base_path).copy()
-    background.paste(base, (0, 0), base)
+    result_image.paste(base, (0, 0), base)
 
-    return background
+    return result_image
 
 
-def create_images(story, section, output_csv):
+def set_front_images(result_image):
+    """
+    建物画像の手前に被る画像の生成
+    """
+    # put tree
+    trees_path = "img/input/front_trees.png"
+    trees = Image.open(trees_path).copy()
+    result_image.paste(trees, (0, 635), trees)
+
+    # put boards
+    boards_path = "img/input/front_boards.png"
+    boards = Image.open(boards_path).copy()
+    result_image.paste(boards, (650, 330), boards)
+
+    # put text
+    # result_image = messages(result_image,title)
+    return result_image
+
+
+def create_images(story, sections, output_csv):
     """
     レベルごとの画像を生成し、画像に付随するメッセージ(src/message.csv)から
     全体画像に添付されるGF用のレベル情報を含むcsv(output.csv)を生成する
     画像はimg/outputに保存される
     """
     message_df = pd.read_csv("src/messages.csv")
-
-    # load building images from folder
     icons = load_image()
-    section_level = [0, 0, 0, 0]
-    total_level = 4 * (MAX_LEVEL - 1)  # 4sections
 
-    story_name = ""
-    for i in section:
-        story_name += str(i)
-
+    section_level = [0, 0, 0, 0]  # 4つの区画それぞれのレベル用リスト
     past_levels = [0, 0, 0, 0]
+    total_level = 4 * (MAX_LEVEL - 1)  # 4つの区画の合計最大レベル
 
     for level in range(total_level):
-        background = set_background_images()
+        result_image = set_background_images()  # 背景画像の生成
 
         selected_section = random.randrange(4)
         while section_level[selected_section] > (MAX_LEVEL - 2):
             selected_section = random.randrange(4)
         section_level[selected_section] += 1
 
-        # buildings
-        background = paste_image(background, icons, section[0], section_level[0], 900, 250)  # upper right
-        background = paste_image(background, icons, section[1], section_level[1], 294, 552)  # upper left
-        background = paste_image(background, icons, section[2], section_level[2], 1192, 396)  # lower right
-        background = paste_image(background, icons, section[3], section_level[3], 586, 698)  # lower left
+        # 区画ごとの建物画像をペースト
+        result_image = paste_image(result_image, icons, sections[0], section_level[0], 900, 250)  # 奥
+        result_image = paste_image(result_image, icons, sections[1], section_level[1], 294, 552)  # 左側
+        result_image = paste_image(result_image, icons, sections[2], section_level[2], 1192, 396)  # 右側
+        result_image = paste_image(result_image, icons, sections[3], section_level[3], 586, 698)  # 手前
 
-        message_column = 2
-        value = section[selected_section] * (MAX_LEVEL - 1) + section_level[selected_section] - 1
-        print(level, "selected_section", selected_section, "current_section=", value)
+        # 画像ごとのメッセージ情報の生成
+        row_number = (
+            sections[selected_section] * (MAX_LEVEL - 1) + section_level[selected_section] - 1
+        )  # レベルごとの情報をmessages.csvから参照するための番号
         position_info = ["奥", "左側", "右側", "手前"]
         level_message = (
             "{}の".format(position_info[selected_section])
-            + message_df.iat[value, 1]
+            + message_df.iat[row_number, 1]
             + "区画のニュースです！ "
-            + message_df.iat[value, message_column]
+            + message_df.iat[row_number, 2]
         )
-        print(level_message)
-        level_population = message_df.iat[value, 6]
-        level_education = message_df.iat[value, 7]
-        level_health = message_df.iat[value, 8]
-        level_nature = message_df.iat[value, 9]
+        # ステータス情報を参照
+        level_population = message_df.iat[row_number, 6]
+        level_education = message_df.iat[row_number, 7]
+        level_health = message_df.iat[row_number, 8]
+        level_nature = message_df.iat[row_number, 9]
 
+        # 現在のレベルを参照
         past_levels[0] += level_population
         past_levels[1] += level_education
         past_levels[2] += level_health
@@ -176,9 +191,9 @@ def create_images(story, section, output_csv):
                 "title_number": story,
                 "message": level_message,
                 "level": level,
-                "character": message_df.iat[value, 3],
-                "character_message": message_df.iat[value, 4],
-                "character_img": message_df.iat[value, 5],
+                "character": message_df.iat[row_number, 3],
+                "character_message": message_df.iat[row_number, 4],
+                "character_img": message_df.iat[row_number, 5],
                 "level_population": past_levels[0],
                 "level_education": past_levels[1],
                 "level_health": past_levels[2],
@@ -186,26 +201,15 @@ def create_images(story, section, output_csv):
             },
             ignore_index=True,
         )
+        print("message:", level_message)
+        print("levels:", past_levels)
 
-        print("levels", past_levels)
-
-        # put tree
-        trees_path = "img/input/front_trees.png"
-        trees = Image.open(trees_path).copy()
-        background.paste(trees, (0, 635), trees)
-
-        # put boards
-        boards_path = "img/input/front_boards.png"
-        boards = Image.open(boards_path).copy()
-        background.paste(boards, (650, 330), boards)
-
-        # put text
-        # background = messages(background,title)
+        result_image = set_front_images(result_image)  # 前面画像の生成
 
         png_filename = "output_for_slack_app/img/story_{}_{}.png".format(story, level)
-        background.save(png_filename, quality=95)
+        result_image.save(png_filename, quality=95)
 
-        background = None
+        result_image = None
     return output_csv
 
 
