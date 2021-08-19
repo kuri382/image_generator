@@ -1,12 +1,19 @@
 # Generate images and output.csv(messages)
+install poetry 
 ```
-poetry run python generate_image.py
+$ pip install poetry
+```
+run app
+```
+$ poetry init
+$ poetry install # install modules
+$ poetry run python generate_image.py
 ```
 
 # Formating
 install pysen
 ```
-poetry add -D pysen -E lint
+$ poetry add -D pysen -E lint
 ```
 add settings in pyproject.toml
 ```
